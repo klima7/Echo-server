@@ -1,0 +1,4 @@
+C:\Users\ukasz\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\203.7148.70\bin\cmake\win\bin\cmake.exe -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - MinGW Makefiles" C:\Users\ukasz\CLionProjects\SerwerEcho
+-- Configuring done
+-- Generating done
+-- Build files have been written to: C:/Users/ukasz/CLionProjects/SerwerEcho/cmake-build-debug
