@@ -15,6 +15,7 @@ CRITICAL_SECTION cs;
 
 // Prototypes
 BOOL WINAPI interrupt_handler(DWORD signal);
+DWORD WINAPI client_thread(LPVOID args);
 void handle_client(sockaddr_in client_addr, SOCKET client_sock);
 void not_handle_client(sockaddr_in client_addr, SOCKET client_sock);
 void accept_client(SOCKET server_sock, sockaddr_in &client_addr, SOCKET &client_sock);
@@ -31,21 +32,22 @@ struct client_data_t {
 int main(int argc, char **argv) {
 
     InitializeCriticalSection(&cs);
-
     setup_interrupt();
     int port = get_port(argc, argv);
     SOCKET server_sock = prepare_server(port);
 
     while(running) {
         struct sockaddr_in client_addr;
+        struct client_data_t client_data;
         SOCKET client_sock;
 
         accept_client(server_sock, client_addr, client_sock);
-        handle_client(client_addr, client_sock);
+        client_data.client_sock = client_sock;
+        client_data.client_addr = client_addr;
+        CreateThread(NULL, 0, client_thread, &client_data, 0, NULL);
     }
 
     close_server(server_sock);
-
     DeleteCriticalSection(&cs);
 }
 
@@ -141,7 +143,6 @@ SOCKET prepare_server(int port) {
 void accept_client(SOCKET server_sock, sockaddr_in &client_addr, SOCKET &client_sock) {
 
     // Accept
-    cout << "Waiting to accept client" << endl;
     client_sock= accept(server_sock, (struct sockaddr *) &client_addr, NULL);
     if (client_sock == INVALID_SOCKET) {
         cerr << "Unable to accept. Error: " << WSAGetLastError << endl;
@@ -176,7 +177,7 @@ void handle_client(sockaddr_in client_addr, SOCKET client_sock) {
     // Display info
     char *client_ip = inet_ntoa(client_addr.sin_addr);
     int client_port = client_addr.sin_port;
-    cout << "Client " << client_ip << " connected on port " << client_port << endl;
+    cout << "Client " << client_ip << " connected on port " << client_port << " (" << connected_clients << " connected clients)" << endl;
 
     while (true) {
 
@@ -202,7 +203,7 @@ void handle_client(sockaddr_in client_addr, SOCKET client_sock) {
     free(client_ip);
 
     // Display info
-    cout << "Client " << client_ip << " on port " << client_port << " disconnected" << endl;
+    cout << "Client " << client_ip << " on port " << client_port << " disconnected" << " (" << connected_clients-1 << " connected clients)" << endl;
 }
 
 void not_handle_client(sockaddr_in client_addr, SOCKET client_sock) {
