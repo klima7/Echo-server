@@ -8,9 +8,26 @@
 
 using namespace std;
 
+volatile bool running = true;
+
+// Handler invoked on ctrl-c
+BOOL WINAPI interrupt_handler(DWORD signal) {
+    if (signal == CTRL_C_EVENT) {
+        cout << "CLOSING SERVER AT THE NEAREST OPPORTUNITY" << endl;
+        running = false;
+    }
+    return TRUE;
+}
+
 int main(int argc, char **argv) {
 
     int port = DEFAULT_PORT;
+
+    // Setting ctrl-c handler
+    if (!SetConsoleCtrlHandler(interrupt_handler, TRUE)) {
+        cerr << "ERROR: Could not set control handler" << endl;
+        return EXIT_FAILURE;
+    }
 
     // Get port
     if(argc > 1) {
@@ -58,7 +75,7 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    while(true) {
+    while(running) {
 
         // Accept
         cout << "Waiting to accept client" << endl;
@@ -71,7 +88,7 @@ int main(int argc, char **argv) {
             return EXIT_FAILURE;
         }
 
-        // Display client info
+        // Display info
         char *client_ip = inet_ntoa(client_addr.sin_addr);
         int client_port = client_addr.sin_port;
         cout << "Client " << client_ip << " connected on port " << client_port << endl;
@@ -91,6 +108,8 @@ int main(int argc, char **argv) {
             // Send
             result = send(client_sock, buffer, received_bytes, 0);
             if (result == SOCKET_ERROR) break;
+
+            if(!running) break;
         }
 
         // Display info
@@ -100,15 +119,19 @@ int main(int argc, char **argv) {
         free(client_ip);
     }
 
-    // Close
+    // close socket
     result = closesocket(server_sock);
     if(result == SOCKET_ERROR) {
         cerr << "Unable to close socket. Error: " << WSAGetLastError << endl;
         WSACleanup();
-        return EXIT_FAILURE;
+        exit(EXIT_FAILURE);
     }
 
     // WSACleanup
     WSACleanup();
-    return EXIT_SUCCESS;
+
+    // Display info
+    cout << "Server closed" << endl;
+    sleep(5);
+    exit(EXIT_SUCCESS);
 }
