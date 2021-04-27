@@ -14,14 +14,12 @@ int connected_clients = 0;
 CRITICAL_SECTION cs;
 
 // Prototypes
-BOOL WINAPI interrupt_handler(DWORD signal);
 DWORD WINAPI client_thread(LPVOID args);
 void handle_client(sockaddr_in client_addr, SOCKET client_sock);
 void not_handle_client(sockaddr_in client_addr, SOCKET client_sock);
 void accept_client(SOCKET server_sock, sockaddr_in &client_addr, SOCKET &client_sock);
 SOCKET prepare_server(int port);
 void close_server(SOCKET server_sock);
-void setup_interrupt();
 int get_port(int argc, char *const *argv);
 
 struct client_data_t {
@@ -32,7 +30,6 @@ struct client_data_t {
 int main(int argc, char **argv) {
 
     InitializeCriticalSection(&cs);
-    setup_interrupt();
     int port = get_port(argc, argv);
     SOCKET server_sock = prepare_server(port);
 
@@ -51,22 +48,6 @@ int main(int argc, char **argv) {
     DeleteCriticalSection(&cs);
 }
 
-void setup_interrupt() {
-    if (!SetConsoleCtrlHandler(interrupt_handler, TRUE)) {
-        cerr << "ERROR: Could not set control handler" << endl;
-        exit(EXIT_FAILURE);
-    }
-}
-
-// Handler invoked on ctrl-c
-BOOL WINAPI interrupt_handler(DWORD signal) {
-    if (signal == CTRL_C_EVENT) {
-        cout << "CLOSING SERVER AT THE NEAREST OPPORTUNITY" << endl;
-        running = false;
-    }
-    return TRUE;
-}
-
 int get_port(int argc, char *const *argv) {
     int port = DEFAULT_PORT;
     if(argc > 1) {
@@ -77,25 +58,6 @@ int get_port(int argc, char *const *argv) {
         }
     }
     return port;
-}
-
-void close_server(SOCKET server_sock) {// close socket
-
-    // Close server socket
-    int result = closesocket(server_sock);
-    if(result == SOCKET_ERROR) {
-        cerr << "Unable to close socket. Error: " << WSAGetLastError << endl;
-        WSACleanup();
-        exit(EXIT_FAILURE);
-    }
-
-    // WSACleanup
-    WSACleanup();
-
-    // Display info
-    cout << "Server closed" << endl;
-    sleep(5);
-    exit(EXIT_SUCCESS);
 }
 
 SOCKET prepare_server(int port) {
@@ -138,6 +100,25 @@ SOCKET prepare_server(int port) {
     cout << "Server is listening on port " << port << endl;
 
     return server_sock;
+}
+
+void close_server(SOCKET server_sock) {// close socket
+
+    // Close server socket
+    int result = closesocket(server_sock);
+    if(result == SOCKET_ERROR) {
+        cerr << "Unable to close socket. Error: " << WSAGetLastError << endl;
+        WSACleanup();
+        exit(EXIT_FAILURE);
+    }
+
+    // WSACleanup
+    WSACleanup();
+
+    // Display info
+    cout << "Server closed" << endl;
+    sleep(5);
+    exit(EXIT_SUCCESS);
 }
 
 void accept_client(SOCKET server_sock, sockaddr_in &client_addr, SOCKET &client_sock) {
