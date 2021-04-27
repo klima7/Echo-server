@@ -1,3 +1,0 @@
-C:/Users/ukasz/CLionProjects/SerwerEcho/cmake-build-debug/CMakeFiles/edit_cache.dir
-C:/Users/ukasz/CLionProjects/SerwerEcho/cmake-build-debug/CMakeFiles/SerwerEcho.dir
-C:/Users/ukasz/CLionProjects/SerwerEcho/cmake-build-debug/CMakeFiles/rebuild_cache.dir
